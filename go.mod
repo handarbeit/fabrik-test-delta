@@ -1,3 +1,3 @@
-module github.com/handarbeit/fabrik-test-beta
+module github.com/handarbeit/fabrik-test-delta
 
 go 1.22

@@ -1,9 +1,9 @@
-// Package greeting provides personalized greeting strings for the fabrik-test-alpha test bed.
+// Package greeting provides personalized greeting strings for the fabrik-test-gamma test bed.
 package greeting
 
 // GreetingFor returns a personalized greeting for the given name.
 func GreetingFor(name string) string {
-	return "Hello, " + name + ", from fabrik-test-beta"
+	return "Hello, " + name + ", from fabrik-test-delta"
 }
 
 // HelloE2E returns the sentinel string for the cross-repo spawn regression test.

@@ -7,8 +7,8 @@ func TestGreetingFor(t *testing.T) {
 		name string
 		want string
 	}{
-		{"", "Hello, , from fabrik-test-beta"},
-		{"Alice", "Hello, Alice, from fabrik-test-beta"},
+		{"", "Hello, , from fabrik-test-delta"},
+		{"Alice", "Hello, Alice, from fabrik-test-delta"},
 	}
 	for _, tt := range tests {
 		if got := GreetingFor(tt.name); got != tt.want {
