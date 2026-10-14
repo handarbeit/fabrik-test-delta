@@ -1,98 +1,90 @@
-# Feature Specification: Add HelloIssue31() to pkg/greeting for cross-repo spawn regression test
+# Feature Specification: Add HelloE2E202610142327011219 sentinel to pkg/greeting
 
 **Feature Branch**: `fabrik/issue-5`
-**Created**: 2026-06-16
-**Status**: Draft
-**Input**: User description: "Add HelloIssue31() to pkg/greeting (cross-repo spawn for alpha issue #31)"
+**Created**: 2026-10-14
+**Status**: Specified
+**Input**: User description: "## Goal
+
+Add one exported function and a matching test to the `pkg/greeting` package. This is the delta (beta) half of a cross-repo e2e regression scenario. A consumer repo, `handarbeit/fabrik-test-gamma`, will import this function once it has merged, so this work must land first.
+
+## Requirements
+
+- In `pkg/greeting/greeting.go`, append an exported function `HelloE2E202610142327011219() string` that returns exactly the literal string `e2e-cross-repo-spawn-20261014-232701-1219`. Follow the style of the existing `HelloE2E…` functions in that file: a doc comment, then a one-line body.
+- In `pkg/greeting/greeting_test.go`, append `TestHelloE2E202610142327011219`, following the existing per-function test style: a `const want` holding the literal, compare `HelloE2E202610142327011219()` against it, and call `t.Errorf` on mismatch.
+- Use the function name and the string literal verbatim. A per-run-unique token is already baked into both, and the scenario's final assertion depends on this exact text landing in this repo. Do not invent a different name or value.
+- The change must be strictly additive. Do not modify or remove any existing function or test.
+
+## Scope
+
+Only `pkg/greeting/greeting.go` and `pkg/greeting/greeting_test.go`. No `go.mod` changes are expected, since the module has no dependencies.
+
+## Acceptance
+
+- `HelloE2E202610142327011219` is present on this repo's `main` branch and returns `e2e-cross-repo-spawn-20261014-232701-1219`.
+- `go build ./...` and `go test ./...` pass.
+- The PR body contains `Closes #<this issue number>`.
+
+*Spawned by Fabrik from parent issue handarbeit/fabrik-test-gamma#70 as a multi-issue decomposition. The parent's plan is at the link above.*"
 
 ## Background
 
-This is a sub-issue spawned by `handarbeit/fabrik-test-alpha` issue #31, which exercises Fabrik's cross-repo decomposition path (regression test for Fabrik issue #803). Alpha cannot compile or pass tests until a new function `HelloIssue31()` is exported from `fabrik-test-beta` at a pinned semver version `v0.3.0`. This sub-issue must reach Done before alpha's Implement stage proceeds.
+This issue is the delta half of a cross-repo end-to-end regression scenario for issue spawning. The parent issue, `handarbeit/fabrik-test-gamma#70`, was decomposed into work in more than one repository. A consumer repo, `handarbeit/fabrik-test-gamma`, will import a new sentinel function from this repo's `pkg/greeting` package. The consumer can only do that after the function exists on this repo's `main`, so this work must merge first.
 
-This change is purely additive. The existing functions `GreetingFor(name string) string` and `HelloE2E() string` in `pkg/greeting/greeting.go` must remain completely unchanged. `go.mod` must remain pinned to `go 1.22` with no new dependencies.
+The function name and its return value both embed a per-run-unique token. The scenario's final assertion checks that this exact text landed in this repo, so neither may be altered. The package already holds several sentinel functions of the same kind from earlier runs of the scenario. Each has a doc comment and a one-line body returning a literal, and each has a matching test.
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Add HelloIssue31 function (Priority: P1)
+### User Story 1 - Provide the sentinel function and its test (Priority: P1)
 
-A consumer of `pkg/greeting` (the alpha repo) calls `HelloIssue31()` with no arguments and receives the sentinel string `"e2e-cross-repo-spawn-31"` that proves the cross-repo spawn pipeline ran end-to-end correctly for alpha issue #31.
+A consumer repo needs `greeting.HelloE2E202610142327011219()` to exist on this repo's `main` and to return the agreed literal. The package gains that function and a test that pins its return value.
 
-**Why this priority**: This is the entire scope of the issue — without this function, the alpha repo cannot compile and the E2E regression test cannot run.
+**Why this priority**: It is the only deliverable. The consumer repo's work and the scenario's final assertion both depend on it.
 
-**Independent Test**: Run `go test ./pkg/greeting/...` after the change; all existing tests must still pass, and at least one new test must assert `HelloIssue31() == "e2e-cross-repo-spawn-31"`.
-
-**Acceptance Scenarios**:
-
-1. **Given** `pkg/greeting` is imported, **When** `greeting.HelloIssue31()` is called, **Then** it returns exactly `"e2e-cross-repo-spawn-31"` (no trailing whitespace, no newline)
-2. **Given** `pkg/greeting` is imported, **When** `greeting.GreetingFor("Alice")` is called, **Then** it still returns `"Hello, Alice, from fabrik-test-beta"` (existing function unchanged)
-3. **Given** `pkg/greeting` is imported, **When** `greeting.HelloE2E()` is called, **Then** it still returns `"e2e-cross-repo-spawn"` (existing function unchanged)
-4. **Given** the codebase, **When** `go build ./...` is run, **Then** it exits 0
-5. **Given** the codebase, **When** `go test ./...` is run, **Then** it exits 0 with at least one test covering `HelloIssue31`
-
----
-
-### User Story 2 - Tag v0.3.0 on merge commit (Priority: P1)
-
-After the PR is merged to `main`, a semver tag `v0.3.0` is created on the merge commit and pushed to `origin`, enabling the alpha repo to reference `github.com/handarbeit/fabrik-test-beta v0.3.0` in its `go.mod`.
-
-**Why this priority**: Without the tag, `go get github.com/handarbeit/fabrik-test-beta@v0.3.0` in alpha's Implement stage will fail. The tag is a hard dependency for the cross-repo E2E test.
-
-**Independent Test**: Run `git ls-remote --tags origin` after merge; `refs/tags/v0.3.0` must appear.
+**Independent Test**: Run `go build ./...` and `go test ./...` in this repo. The new test passes. Calling the function returns `e2e-cross-repo-spawn-20261014-232701-1219`.
 
 **Acceptance Scenarios**:
 
-1. **Given** the PR has been merged to `main`, **When** `git fetch origin main && git checkout main && git pull origin main && git tag v0.3.0 && git push origin v0.3.0` is run, **Then** `refs/tags/v0.3.0` exists on the remote pointing to the merge commit
+1. **Given** the `pkg/greeting` package on `main`, **When** `HelloE2E202610142327011219()` is called, **Then** it returns exactly `e2e-cross-repo-spawn-20261014-232701-1219`.
+2. **Given** the new function and test are in place, **When** `go build ./...` and `go test ./...` run, **Then** both succeed.
+3. **Given** the change, **When** the diff is reviewed, **Then** it only adds lines to `pkg/greeting/greeting.go` and `pkg/greeting/greeting_test.go`, and no existing function or test is modified or removed.
 
 ---
 
 ### Edge Cases
 
-- `HelloIssue31()` takes no parameters — callers must not pass any arguments
-- The return value must be byte-exact: `"e2e-cross-repo-spawn-31"` with no trailing whitespace or newline
-- Tags on this repo are sequential: `v0.1.0` (GreetingFor), `v0.2.0` (HelloE2E) — the next tag MUST be `v0.3.0`, not any other version
+- A typo in the function name or the literal would break the scenario's final assertion and the consumer's import, so both must match verbatim.
+- The existing sentinel functions and tests must keep their behavior, because the change is strictly additive.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: `pkg/greeting/greeting.go` MUST export `HelloIssue31() string` returning exactly `"e2e-cross-repo-spawn-31"` — no parameters, no other return values
-- **FR-002**: `HelloIssue31` MUST be added as a new function in `greeting.go` — `GreetingFor` and `HelloE2E` are left completely untouched
-- **FR-003**: `pkg/greeting/greeting_test.go` MUST include a new `TestHelloIssue31` function following the same pattern as `TestHelloE2E`, asserting `HelloIssue31() == "e2e-cross-repo-spawn-31"`
-- **FR-004**: `go.mod` MUST remain unchanged (`module github.com/handarbeit/fabrik-test-beta`, `go 1.22`, no new dependencies)
-- **FR-005**: `go build ./...` and `go test ./...` MUST both exit 0 before the PR is marked ready
-- **FR-006**: After the PR is merged to `main`, create git tag `v0.3.0` on the merge commit and push it to `origin` — this MUST occur before `FABRIK_STAGE_COMPLETE` is emitted in the Implement stage
+- **FR-001**: `pkg/greeting` exposes an exported function `HelloE2E202610142327011219() string` that returns exactly the literal `e2e-cross-repo-spawn-20261014-232701-1219`.
+- **FR-002**: The function follows the style of the existing `HelloE2E…` functions: a doc comment, then a one-line body.
+- **FR-003**: A test named `TestHelloE2E202610142327011219` exists in the package's test file. It holds the expected literal in a `const want`, compares the function's result against it, and reports a mismatch with `t.Errorf`.
+- **FR-004**: The function name and the literal are used verbatim, with no renaming and no alternative value.
+- **FR-005**: The change is strictly additive. No existing function or test is modified or removed.
+- **FR-006**: The change touches only `pkg/greeting/greeting.go` and `pkg/greeting/greeting_test.go`. It makes no `go.mod` changes.
+- **FR-007**: The PR body contains `Closes #5`.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: `greeting.HelloIssue31()` returns exactly `"e2e-cross-repo-spawn-31"`
-- **SC-002**: `greeting.GreetingFor("Alice")` still returns `"Hello, Alice, from fabrik-test-beta"` (no regression)
-- **SC-003**: `greeting.HelloE2E()` still returns `"e2e-cross-repo-spawn"` (no regression)
-- **SC-004**: `go build ./...` exits 0
-- **SC-005**: `go test ./...` exits 0 with at least one test covering `HelloIssue31`
-- **SC-006**: `git ls-remote --tags origin` shows `refs/tags/v0.3.0` after the PR merges
-- **SC-007**: `go.mod` is unchanged (still `go 1.22`, no new dependencies)
+- **SC-001**: `HelloE2E202610142327011219` is present on this repo's `main` branch and returns `e2e-cross-repo-spawn-20261014-232701-1219`.
+- **SC-002**: `go build ./...` and `go test ./...` both pass, including the new test.
+- **SC-003**: The diff against `main` contains only added lines, in exactly the two in-scope files.
+- **SC-004**: The consumer repo `handarbeit/fabrik-test-gamma` can import the function after this work merges.
 
 ## Assumptions
 
-- `GreetingFor(name string) string` and `HelloE2E() string` have external consumers in alpha and must not be modified
-- No `go.sum` file is needed (no external dependencies added)
-- CI (`.github/workflows/ci.yml`) runs `go build ./...` and `go test ./...` — no CI changes are needed
-- The tagging step (FR-006) is performed by the Implement stage after the PR is merged, not as part of the PR branch itself
+- The module has no dependencies, so no `go.mod` change is needed.
+- The new function and test go at the end of their files, after the most recent existing sentinel (`HelloE2E202610142252572433`).
+- The doc comment wording follows the existing sentinels: "returns the sentinel string for the cross-repo spawn regression test."
 
 ## Out of Scope
 
-- Any changes to `GreetingFor` or `HelloE2E` or any other existing function
-- Bumping `go.mod` version or adding dependencies
-- Any changes to CI configuration
-- Any changes to `fabrik-test-alpha`
-
-## Source References
-
-- `pkg/greeting/greeting.go` — file to add `HelloIssue31` to
-- `pkg/greeting/greeting_test.go` — file to add test coverage to
-- `go.mod` — module declaration (no changes needed)
-- Parent issue: `handarbeit/fabrik-test-alpha#31`
-- Validates: Fabrik issue #803 (cross-repo decomposition)
-- Prior art: `specs/3-add-helloe2e-to-pkg/spec.md` (same pattern, `v0.2.0` tag)
+- Any change to the consumer repo `handarbeit/fabrik-test-gamma`.
+- Any change to existing sentinel functions or tests, including cleanup of old ones.
+- Any change to `go.mod`, docs, or files other than the two named above.
+- Any other behavior in `pkg/greeting`.
