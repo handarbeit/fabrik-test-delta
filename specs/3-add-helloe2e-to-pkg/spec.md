@@ -1,88 +1,94 @@
-# Feature Specification: Add HelloE2E202610142252572433 sentinel to pkg/greeting
+# Feature Specification: Add HelloE2E() to pkg/greeting for cross-repo spawn regression test
 
 **Feature Branch**: `fabrik/issue-3`
-**Created**: 2026-10-14
-**Status**: Specified
-**Input**: User description:
-
-> ## Problem
-> `handarbeit/fabrik-test-gamma` (the "alpha" repo) needs to call a new greeting function from this repo's `pkg/greeting` package. That function doesn't exist yet. This work must land and merge first, because gamma cannot import a function that does not yet exist. It is the delta half of a cross-repo e2e scenario, parent issue `handarbeit/fabrik-test-gamma#43`.
->
-> ## Requirements
-> - In `pkg/greeting/greeting.go`, add an exported function `HelloE2E202610142252572433() string` that returns exactly the literal string `"e2e-cross-repo-spawn-20261014-225257-2433"`.
-> - In `pkg/greeting/greeting_test.go`, add a test that calls `HelloE2E202610142252572433()` and fails unless it returns exactly `"e2e-cross-repo-spawn-20261014-225257-2433"`. Follow the existing test style in that file (table-driven if the neighbouring tests are).
-> - Use the function name and the string literal verbatim, character for character. Do not invent a different name or value. A per-run-unique token (`2252572433`) is already baked into both, and a downstream assertion checks that this exact text lands in this repo.
-> - Follow the pattern of the existing `HelloE2E<token>()` functions in the same file: one exported function per run, with a matching test case.
-> - Append the new function and test; do not reorder, rename or remove the existing ones.
->
-> ## Scope
-> - Only `pkg/greeting/greeting.go` and `pkg/greeting/greeting_test.go` in this repo.
-> - No changes to other packages, CI, or docs.
-> - No changes in `handarbeit/fabrik-test-gamma`. The parent issue handles the gamma side after this merges.
->
-> ## Acceptance
-> - `go build ./...` and `go test ./...` pass in this repo.
-> - On this repo's default branch after merge, `pkg/greeting/greeting.go` contains `HelloE2E202610142252572433` returning `"e2e-cross-repo-spawn-20261014-225257-2433"`, and `pkg/greeting/greeting_test.go` contains a test for it.
-> - The PR carries `Closes #<this issue>` in its body.
->
-> *Spawned by Fabrik from parent issue handarbeit/fabrik-test-gamma#43 as a multi-issue decomposition. The parent's plan is at the link above.*
+**Created**: 2026-05-24
+**Status**: Draft
+**Input**: User description: "Add HelloE2E() to pkg/greeting for cross-repo spawn regression test"
 
 ## Background
 
-`handarbeit/fabrik-test-gamma` (the "alpha" repo) needs to call a new greeting function from this repo's `pkg/greeting` package, and that function does not exist yet. Because gamma cannot import something that isn't there, this change must merge first. It is the delta half of a cross-repo e2e scenario whose parent is `handarbeit/fabrik-test-gamma#43`, spawned as part of a multi-issue decomposition.
+This is a sub-issue spawned by `handarbeit/fabrik-test-alpha` issue #8 (E2E cross-repo spawn). Alpha calls a new function `HelloE2E()` from `pkg/greeting`; that function must exist in a tagged release of `fabrik-test-beta` before alpha's Implement stage begins. This sub-issue must reach Done before alpha proceeds.
 
-The package already contains one sentinel function per earlier e2e run (`HelloE2E<token>()`), each returning a fixed string and each with a matching test. This issue adds the next one in that series. The function name and its return value carry a per-run-unique token (`2252572433`), and a downstream assertion checks that this exact text lands in this repo, so the name and value must be reproduced exactly.
+This change validates Fabrik issue #803 (on-demand spawn-target repo init). The existing `GreetingFor(name string) string` function must not be modified in any way. `go.mod` must remain unchanged (`go 1.22`, no external dependencies).
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Sentinel function available for the gamma repo to import (Priority: P1)
+### User Story 1 - Add HelloE2E function (Priority: P1)
 
-A consumer in `handarbeit/fabrik-test-gamma` needs an exported function in `pkg/greeting` that returns the run's sentinel string, so the cross-repo e2e scenario can proceed once this change has merged.
+A consumer of `pkg/greeting` (the alpha repo) calls `HelloE2E()` with no arguments and receives the sentinel string `"e2e-cross-repo-spawn"` that proves the cross-repo spawn pipeline ran end-to-end correctly.
 
-**Why this priority**: It is the only deliverable of this issue; the gamma-side work is blocked until it lands.
+**Why this priority**: This is the entire scope of the issue — without this function, the alpha repo cannot compile and the E2E regression test cannot run.
 
-**Independent Test**: Run `go test ./...` in this repo and confirm the new test passes. Then inspect the default branch after merge and confirm both the function and its test are present.
+**Independent Test**: Run `go test ./pkg/greeting/...` after the change; all existing tests must still pass, and at least one new test must assert `HelloE2E() == "e2e-cross-repo-spawn"`.
 
 **Acceptance Scenarios**:
 
-1. **Given** the `pkg/greeting` package, **When** `HelloE2E202610142252572433()` is called, **Then** it returns exactly `"e2e-cross-repo-spawn-20261014-225257-2433"`.
-2. **Given** the new test, **When** the function returns any value other than that literal, **Then** the test fails.
-3. **Given** the change is merged, **When** the default branch is inspected, **Then** `pkg/greeting/greeting.go` contains `HelloE2E202610142252572433` and `pkg/greeting/greeting_test.go` contains a test for it.
+1. **Given** `pkg/greeting` is imported, **When** `greeting.HelloE2E()` is called, **Then** it returns exactly `"e2e-cross-repo-spawn"` (no trailing whitespace, no newline)
+2. **Given** `pkg/greeting` is imported, **When** `greeting.GreetingFor("Alice")` is called, **Then** it still returns `"Hello, Alice, from fabrik-test-beta"` (existing function unchanged)
+3. **Given** the codebase, **When** `go build ./...` is run, **Then** it exits 0
+4. **Given** the codebase, **When** `go test ./...` is run, **Then** it exits 0 with at least one test covering `HelloE2E`
+
+---
+
+### User Story 2 - Tag v0.2.0 on merge commit (Priority: P1)
+
+After the PR is merged to `main`, a semver tag `v0.2.0` is created on the merge commit and pushed to `origin`, enabling the alpha repo to reference `github.com/handarbeit/fabrik-test-beta v0.2.0` in its `go.mod`.
+
+**Why this priority**: Without the tag, `go mod tidy` in alpha will fail when it tries to resolve `v0.2.0`. The tag is a hard dependency for the cross-repo E2E test.
+
+**Independent Test**: Run `git ls-remote --tags origin` after merge; `refs/tags/v0.2.0` must appear.
+
+**Acceptance Scenarios**:
+
+1. **Given** the PR has been merged to `main`, **When** `git fetch origin main && git tag v0.2.0 origin/main && git push origin v0.2.0` is run, **Then** `refs/tags/v0.2.0` exists on the remote pointing to the merge commit
 
 ---
 
 ### Edge Cases
 
-- A typo or alternative spelling in the function name or string, or a different token, would fail the downstream assertion even though this repo's own tests would still pass. Both must match character for character.
-- Existing functions and tests must remain untouched and in their original order; the new ones are appended.
-- The new test must follow the style of the neighbouring tests in the file so the file stays consistent.
+- `HelloE2E()` takes no parameters — callers must not pass any arguments
+- The return value must be byte-exact: `"e2e-cross-repo-spawn"` with no trailing whitespace or newline
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: `pkg/greeting` MUST export a function `HelloE2E202610142252572433() string` that returns exactly the literal `"e2e-cross-repo-spawn-20261014-225257-2433"`.
-- **FR-002**: The test file for `pkg/greeting` MUST contain a test that calls `HelloE2E202610142252572433()` and fails unless the result equals `"e2e-cross-repo-spawn-20261014-225257-2433"`.
-- **FR-003**: The function name and string literal MUST be used verbatim, with no variation in name, token or value.
-- **FR-004**: The new function and test MUST follow the existing `HelloE2E<token>()` pattern in the same files (one exported function per run, one matching test) and MUST be appended after the existing ones, without reordering, renaming or removing any existing function or test.
-- **FR-005**: The change MUST be confined to `pkg/greeting/greeting.go` and `pkg/greeting/greeting_test.go`.
-- **FR-006**: The pull request body MUST include `Closes #3`.
+- **FR-001**: `pkg/greeting/greeting.go` MUST export `HelloE2E() string` returning exactly `"e2e-cross-repo-spawn"` — no parameters, no other return values
+- **FR-002**: `HelloE2E` MUST be added as a second function in `greeting.go` — `GreetingFor` is left completely untouched
+- **FR-003**: `pkg/greeting/greeting_test.go` MUST include at least one test asserting `greeting.HelloE2E() == "e2e-cross-repo-spawn"` (either a new table row in `TestGreetingFor` or a standalone `TestHelloE2E`)
+- **FR-004**: `go.mod` MUST remain unchanged (`module github.com/handarbeit/fabrik-test-beta`, `go 1.22`, no new dependencies)
+- **FR-005**: `go build ./...` and `go test ./...` MUST both exit 0 before the PR is marked ready
+- **FR-006**: After the PR is merged to `main`, create git tag `v0.2.0` on the merge commit and push it to `origin`
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: `go build ./...` and `go test ./...` pass in this repo with the change applied.
-- **SC-002**: After merge, the default branch's `pkg/greeting/greeting.go` contains `HelloE2E202610142252572433` returning `"e2e-cross-repo-spawn-20261014-225257-2433"`, and `pkg/greeting/greeting_test.go` contains a test for it.
-- **SC-003**: The diff touches only the two files named in FR-005, and contains only additions to the existing function and test lists.
+- **SC-001**: `greeting.HelloE2E()` returns exactly `"e2e-cross-repo-spawn"`
+- **SC-002**: `greeting.GreetingFor("Alice")` still returns `"Hello, Alice, from fabrik-test-beta"` (no regression)
+- **SC-003**: `go build ./...` exits 0
+- **SC-004**: `go test ./...` exits 0 with at least one test covering `HelloE2E`
+- **SC-005**: `git ls-remote --tags origin` shows `refs/tags/v0.2.0` after the PR merges
+- **SC-006**: `go.mod` is unchanged (still `go 1.22`, no new dependencies)
 
 ## Assumptions
 
-- The existing `HelloE2E<token>()` functions and their tests show the current conventions (a doc comment on each function, and a per-function test using a `want` constant). The new code follows them. The existing tests are not table-driven for this series, so a single-case test per function matches the "neighbouring tests" style.
-- The new function's doc comment follows the same wording as the other recent `HelloE2E<token>()` functions.
+- `GreetingFor(name string) string` has external consumers in alpha and must not be modified
+- No `go.sum` file is needed (no external dependencies added)
+- CI (`.github/workflows/ci.yml`) runs `go build ./...` and `go test ./...` — no CI changes are needed; `GOPRIVATE` is not set and must not be required
+- The tagging step (FR-006) is performed by the Implement or Validate stage after the PR is merged, not as part of the PR branch itself
 
 ## Out of Scope
 
-- Any change to other packages, CI configuration or documentation.
-- Any change in `handarbeit/fabrik-test-gamma`; the parent issue handles the gamma side after this merges.
-- Refactoring, reordering or consolidating the existing sentinel functions and tests.
+- Any changes to `GreetingFor` or any other existing function
+- Bumping `go.mod` version or adding dependencies
+- Any changes to CI configuration
+- Any changes to `fabrik-test-alpha`
+
+## Source References
+
+- `pkg/greeting/greeting.go` — file to add `HelloE2E` to
+- `pkg/greeting/greeting_test.go` — file to add test coverage to
+- `go.mod` — module declaration (no changes needed)
+- Parent issue: `handarbeit/fabrik-test-alpha#8`
+- Validates: Fabrik issue #803 (on-demand spawn-target repo init)
