@@ -101,7 +101,7 @@ A maintainer or CI run executes the package tests. A dedicated test asserts the 
 - **FR-004**: The greeting package's tests MUST include a test named exactly `TestHelloE2E202610171410524438` that asserts the function returns `e2e-cross-repo-spawn-20261017-141052-4438`, and that test MUST pass.
 - **FR-005**: The test MUST follow the file's existing `TestHelloE2E<token>` convention and be appended after the existing tests.
 - **FR-006**: No existing function, test, name or literal may be changed or removed.
-- **FR-007**: The module definition and dependencies MUST NOT change, and no files other than the greeting source file and its test file may change.
+- **FR-007**: The module definition and dependencies MUST NOT change, and no Go or module files other than the greeting source file and its test file may change. The engine-managed copy of this spec under `specs/` is a pipeline artifact and is exempt.
 
 ## Success Criteria *(mandatory)*
 
@@ -109,7 +109,7 @@ A maintainer or CI run executes the package tests. A dedicated test asserts the 
 
 - **SC-001**: After merge, the default branch contains the text `HelloE2E202610171410524438` and the literal `e2e-cross-repo-spawn-20261017-141052-4438`.
 - **SC-002**: A full build and the full test suite both pass in this repository, with the new test among the passing tests.
-- **SC-003**: The change touches exactly two files, and the diff adds lines only, with no deletions or modifications to existing lines.
+- **SC-003**: Apart from the engine-managed `specs/` copy of this spec, the change touches exactly two files (the greeting source file and its test file), and the diff to them adds lines only, with no deletions or modifications to existing lines.
 
 ## Assumptions
 
