@@ -1,102 +1,65 @@
-# Feature Specification: Add HelloIssue3367() to pkg/greeting for cross-repo spawn regression test
+# Feature Specification: Add HelloE2E202610191221560514 greeting function
 
 **Feature Branch**: `fabrik/issue-37`
-**Created**: 2026-07-09
-**Status**: Draft
-**Input**: User description: "Add HelloIssue3367 to pkg/greeting (cross-repo spawn for fabrik-test-alpha#3367)"
+**Created**: 2026-10-19
+**Status**: Specified
+**Input**: User description: "Add one exported function and one test to the `greeting` package of this repo. This is the prerequisite half of an end-to-end cross-repo spawn regression scenario; a downstream repo (`handarbeit/fabrik-test-gamma`) will import this function once it lands. The identifiers below contain a per-run-unique token and must be used **verbatim**. Do not invent, alter or substitute your own names or strings. A final assertion checks this exact text in `pkg/greeting/greeting.go`. In `pkg/greeting/greeting.go`, add an exported function `HelloE2E202610191221560514() string` with a doc comment, matching the layout of the existing `HelloE2E…` functions. It returns exactly the string literal `e2e-cross-repo-spawn-20261019-122156-0514`. In `pkg/greeting/greeting_test.go`, add a test for it, following the existing per-function test shape: `const want = \"e2e-cross-repo-spawn-20261019-122156-0514\"` and `if got := HelloE2E202610191221560514(); got != want { t.Errorf(...) }`. Append the new function and test after the existing ones. Change nothing else: no other edits to the greeting package, no other files, no dependency changes."
 
 ## Background
 
-This is a sub-issue spawned by `handarbeit/fabrik-test-alpha` issue #3367, which exercises Fabrik's cross-repo decomposition path (regression test for Fabrik issue #803). Alpha cannot compile or pass tests until a new function `HelloIssue3367()` is exported from `fabrik-test-beta` at a pinned semver version `v0.5.0`. This sub-issue must reach Done before alpha's Implement stage proceeds.
+This issue is the prerequisite half of an end-to-end regression scenario for cross-repo child spawning. It was spawned by Fabrik from parent issue `handarbeit/fabrik-test-gamma#467` as part of a multi-issue decomposition. The scenario exercises on-demand spawn-target repo initialisation (#803) and per-run-unique fixture tokens (#1308). A downstream repo (`handarbeit/fabrik-test-gamma`) will pin a commit of this repo that contains the new function, so the change must reach the default branch (`main`). The identifier and string literal embed a per-run-unique token, and a final assertion checks that exact text in `pkg/greeting/greeting.go`, so they must be used verbatim.
 
-This change is purely additive. The existing functions `GreetingFor(name string) string`, `HelloE2E() string`, `HelloIssue31() string`, and `HelloIssue52() string` in `pkg/greeting/greeting.go` must remain completely unchanged. `go.mod` must remain pinned to `go 1.22` with no new dependencies.
+The `greeting` package already exists at `pkg/greeting/` and contains a series of sentinel functions of the same shape (`HelloE2E…`), each with a doc comment and a matching per-function test.
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Add HelloIssue3367 function (Priority: P1)
+### User Story 1 - Downstream repo can pin a commit containing the new sentinel (Priority: P1)
 
-A consumer of `pkg/greeting` (the alpha repo) calls `HelloIssue3367()` with no arguments and receives the sentinel string `"e2e-cross-repo-spawn-3367"` that proves the cross-repo spawn pipeline ran end-to-end correctly for alpha issue #3367.
+A maintainer of the downstream e2e scenario needs `HelloE2E202610191221560514` to exist on this repo's default branch so `fabrik-test-gamma` can import it from a pinned commit.
 
-**Why this priority**: This is the entire scope of the issue — without this function, the alpha repo cannot compile and the E2E regression test cannot run.
+**Why this priority**: It is the only deliverable; the downstream half of the scenario is blocked until it lands.
 
-**Independent Test**: Run `go test ./pkg/greeting/...` after the change; all existing tests must still pass, and at least one new test must assert `HelloIssue3367() == "e2e-cross-repo-spawn-3367"`.
-
-**Acceptance Scenarios**:
-
-1. **Given** `pkg/greeting` is imported, **When** `greeting.HelloIssue3367()` is called, **Then** it returns exactly `"e2e-cross-repo-spawn-3367"` (no trailing whitespace, no newline)
-2. **Given** `pkg/greeting` is imported, **When** `greeting.GreetingFor("Alice")` is called, **Then** it still returns `"Hello, Alice, from fabrik-test-beta"` (existing function unchanged)
-3. **Given** `pkg/greeting` is imported, **When** `greeting.HelloE2E()` is called, **Then** it still returns `"e2e-cross-repo-spawn"` (existing function unchanged)
-4. **Given** `pkg/greeting` is imported, **When** `greeting.HelloIssue31()` is called, **Then** it still returns `"e2e-cross-repo-spawn-31"` (existing function unchanged)
-5. **Given** `pkg/greeting` is imported, **When** `greeting.HelloIssue52()` is called, **Then** it still returns `"e2e-cross-repo-spawn-52"` (existing function unchanged)
-6. **Given** the codebase, **When** `go build ./...` is run, **Then** it exits 0
-7. **Given** the codebase, **When** `go test ./...` is run, **Then** it exits 0 with at least one test covering `HelloIssue3367`
-
----
-
-### User Story 2 - Tag v0.5.0 on merge commit (Priority: P1)
-
-After the PR is merged to `main`, a semver tag `v0.5.0` is created on the merge commit and pushed to `origin`, enabling the alpha repo to resolve `github.com/handarbeit/fabrik-test-beta@v0.5.0` to a version that includes `HelloIssue3367`.
-
-**Why this priority**: Without the tag, `go get github.com/handarbeit/fabrik-test-beta@v0.5.0` in alpha's Implement stage will not resolve the new function. The tag is a hard dependency for the cross-repo E2E test.
-
-**Independent Test**: Run `git ls-remote --tags origin` after merge; `refs/tags/v0.5.0` must appear.
+**Independent Test**: Run `go test ./...` in this repo and grep `pkg/greeting/greeting.go` for the function name and literal.
 
 **Acceptance Scenarios**:
 
-1. **Given** the PR has been merged to `main`, **When** `git tag v0.5.0 <merge-commit> && git push origin v0.5.0` is run, **Then** `refs/tags/v0.5.0` exists on the remote pointing to the merge commit
+1. **Given** the repo at the merged commit, **When** `HelloE2E202610191221560514()` is called, **Then** it returns exactly `e2e-cross-repo-spawn-20261019-122156-0514`.
+2. **Given** the merged commit, **When** `pkg/greeting/greeting.go` is searched, **Then** it contains both `HelloE2E202610191221560514` and `e2e-cross-repo-spawn-20261019-122156-0514`.
+3. **Given** the merged commit, **When** `go test ./...` runs, **Then** all tests pass, including the new one.
 
 ---
 
 ### Edge Cases
 
-- `HelloIssue3367()` takes no parameters — callers must not pass any arguments
-- The return value must be byte-exact: `"e2e-cross-repo-spawn-3367"` with no trailing whitespace or newline
-- Tags on this repo are sequential: `v0.4.0` is the current highest tag — the next tag MUST be `v0.5.0`, not any other version
+- The identifier and literal contain a per-run token; any alteration (typo, different digits) fails the final assertion, so they must be copied exactly.
+- Existing `HelloE2E…` functions and tests must remain untouched and in their current order; the new ones are appended after them.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: `pkg/greeting/greeting.go` MUST export `HelloIssue3367() string` returning exactly `"e2e-cross-repo-spawn-3367"` — no parameters, no other return values
-- **FR-002**: `HelloIssue3367` MUST be added as a new function in `greeting.go` — `GreetingFor`, `HelloE2E`, `HelloIssue31`, and `HelloIssue52` are left completely untouched
-- **FR-003**: `pkg/greeting/greeting_test.go` MUST include a new `TestHelloIssue3367` function following the same pattern as `TestHelloIssue52`, asserting `HelloIssue3367() == "e2e-cross-repo-spawn-3367"`
-- **FR-004**: `go.mod` MUST remain unchanged (`module github.com/handarbeit/fabrik-test-beta`, `go 1.22`, no new dependencies)
-- **FR-005**: `go build ./...` and `go test ./...` MUST both exit 0 before the PR is marked ready
-- **FR-006**: After the PR is merged to `main`, create git tag `v0.5.0` on the merge commit and push it to `origin` — this MUST occur before `FABRIK_STAGE_COMPLETE` is emitted in the Implement stage
+- **FR-001**: `pkg/greeting/greeting.go` MUST define an exported function `HelloE2E202610191221560514() string` with a doc comment, in the same layout as the existing `HelloE2E…` functions, appended after the existing ones.
+- **FR-002**: `HelloE2E202610191221560514()` MUST return exactly the string `e2e-cross-repo-spawn-20261019-122156-0514`.
+- **FR-003**: `pkg/greeting/greeting_test.go` MUST contain a test for the function in the existing per-function shape (`const want = "e2e-cross-repo-spawn-20261019-122156-0514"`, compare `got` to `want`, `t.Errorf` on mismatch), appended after the existing tests.
+- **FR-004**: No other changes are made: no other edits to the `greeting` package, no other source files, and no dependency changes.
+- **FR-005**: The PR for this issue MUST be merged to the default branch (`main`) so downstream repos can pin a commit that contains the function.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: `greeting.HelloIssue3367()` returns exactly `"e2e-cross-repo-spawn-3367"`
-- **SC-002**: `greeting.GreetingFor("Alice")` still returns `"Hello, Alice, from fabrik-test-beta"` (no regression)
-- **SC-003**: `greeting.HelloE2E()` still returns `"e2e-cross-repo-spawn"` (no regression)
-- **SC-004**: `greeting.HelloIssue31()` still returns `"e2e-cross-repo-spawn-31"` (no regression)
-- **SC-005**: `greeting.HelloIssue52()` still returns `"e2e-cross-repo-spawn-52"` (no regression)
-- **SC-006**: `go build ./...` exits 0
-- **SC-007**: `go test ./...` exits 0 with at least one test covering `HelloIssue3367`
-- **SC-008**: `git ls-remote --tags origin` shows `refs/tags/v0.5.0` after the PR merges
-- **SC-009**: `go.mod` is unchanged (still `go 1.22`, no new dependencies)
+- **SC-001**: `pkg/greeting/greeting.go` on `main` contains both `HelloE2E202610191221560514` and `e2e-cross-repo-spawn-20261019-122156-0514`.
+- **SC-002**: `go test ./...` passes on the merged commit, including the new test.
+- **SC-003**: The diff of the change touches only the greeting source and test files (plus the engine-managed spec file).
 
 ## Assumptions
 
-- `GreetingFor(name string) string`, `HelloE2E() string`, `HelloIssue31() string`, and `HelloIssue52() string` have external consumers and must not be modified
-- No `go.sum` file is needed (no external dependencies added)
-- CI (`.github/workflows/ci.yml`) runs `go build ./...` and `go test ./...` — no CI changes are needed
-- The tagging step (FR-006) is performed by the Implement stage after the PR is merged, not as part of the PR branch itself
+- The `greeting` package files already exist (they do), so no new package needs creating.
+- The doc comment follows the existing wording: "returns the sentinel string for the cross-repo spawn regression test."
+- The engine-managed `specs/37-*/spec.md` file is produced by the pipeline and is not counted as an out-of-scope change.
 
-## Out of Scope
+## Out of Scope *(optional)*
 
-- Any changes to `GreetingFor`, `HelloE2E`, `HelloIssue31`, or `HelloIssue52` or any other existing function
-- Bumping `go.mod` version or adding dependencies
-- Any changes to CI configuration
-- Any changes to `fabrik-test-alpha`
-
-## Source References
-
-- `pkg/greeting/greeting.go` — file to add `HelloIssue3367` to
-- `pkg/greeting/greeting_test.go` — file to add test coverage to
-- `go.mod` — module declaration (no changes needed)
-- Parent issue: `handarbeit/fabrik-test-alpha#3367`
-- Validates: Fabrik issue #803 (cross-repo decomposition)
-- Prior art: `specs/7-add-helloissue52-to-pkg/spec.md` (same pattern, `v0.4.0` tag)
+- Any changes to existing greeting functions or tests.
+- Changes to the downstream `handarbeit/fabrik-test-gamma` repo.
+- Dependency, build or CI changes.
