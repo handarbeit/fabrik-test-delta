@@ -455,3 +455,8 @@ func HelloE2E202611161548245157() string {
 func HelloE2E202611170345385247() string {
 	return "e2e-cross-repo-spawn-20261117-034538-5247"
 }
+
+// HelloE2E202611170510559531 returns the run-unique token for the e2e cross-repo spawn scenario.
+func HelloE2E202611170510559531() string {
+	return "e2e-cross-repo-spawn-20261117-051055-9531"
+}
